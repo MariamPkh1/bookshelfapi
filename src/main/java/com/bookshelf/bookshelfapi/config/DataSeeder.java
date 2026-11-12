@@ -8,6 +8,8 @@ import com.bookshelf.bookshelfapi.repository.BookRepository;
 import com.bookshelf.bookshelfapi.repository.CategoryRepository;
 import com.bookshelf.bookshelfapi.repository.LoanRepository;
 import com.bookshelf.bookshelfapi.repository.TagRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 
 @Configuration
 public class DataSeeder {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
     // Shelf section code per category, used to build call numbers like FIC-ORW-01
     private static final Map<String, String> SECTION_CODES = Map.of(
@@ -60,7 +64,11 @@ public class DataSeeder {
     @Bean
     public CommandLineRunner seedDatabase() {
         return args -> {
-            if (categoryRepository.count() > 0) return;
+            // Seeding again on top of existing tags or books would break their unique names
+            if (categoryRepository.count() > 0 || tagRepository.count() > 0 || bookRepository.count() > 0) {
+                log.info("Database already contains data, skipping seeding");
+                return;
+            }
 
             // Create categories
             Category fiction = category("Fiction", "Novels, short stories, and literary fiction");
@@ -291,10 +299,9 @@ public class DataSeeder {
             bookRepository.saveAll(lentBooks);
             loanRepository.saveAll(loans);
 
-            System.out.println("=== Database seeded with " +
-                    bookRepository.count() + " books, " +
-                    categoryRepository.count() + " categories and " +
-                    loanRepository.count() + " loans ===");
+            log.info("Database seeded with {} books, {} categories, {} tags and {} loans",
+                    bookRepository.count(), categoryRepository.count(),
+                    tagRepository.count(), loanRepository.count());
         };
     }
 

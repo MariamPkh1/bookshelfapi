@@ -24,7 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+// Read-only by default; methods that modify data override this with their own @Transactional
 @Service
+@Transactional(readOnly = true)
 public class BookService {
 
     private final BookRepository bookRepository;

@@ -18,7 +18,9 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+// Read-only by default; methods that modify data override this with their own @Transactional
 @Service
+@Transactional(readOnly = true)
 public class LoanService {
 
     private final LoanRepository loanRepository;
