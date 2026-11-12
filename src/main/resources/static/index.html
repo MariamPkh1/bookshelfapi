@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookShelf · Library Desk</title>
+  <style>
+    :root {
+      --nav: #0f1e3d;
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --ink: #0f172a;
+      --ink-2: #334155;
+      --muted: #64748b;
+      --faint: #94a3b8;
+      --line: #e2e8f0;
+      --line-2: #cbd5e1;
+      --brand-50: #eff6ff;
+      --brand-100: #dbeafe;
+      --brand-300: #93c5fd;
+      --brand-600: #1d4ed8;
+      --brand-700: #1e40af;
+      --ok: #047857;
+      --bad: #b91c1c;
+      --bad-50: #fef2f2;
+      --bad-100: #fee2e2;
+      --ring: 0 0 0 3px rgba(29, 78, 216, 0.18);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 6px 16px rgba(15, 23, 42, 0.06);
+      --font: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+
+    /* ===== App bar ===== */
+    .appbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--nav);
+      color: #fff;
+    }
+    .appbar-inner {
+      max-width: 1280px;
+      height: 60px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--nav);
+      display: grid;
+      place-items: center;
+    }
+    .brand-name { font-weight: 700; font-size: 1.02rem; letter-spacing: -0.01em; line-height: 1.1; }
+    .brand-sub {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.55);
+    }
+    .mainnav { display: flex; align-self: stretch; gap: 4px; }
+    .mainnav a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .mainnav a:hover { color: #fff; }
+    .mainnav a[aria-current="page"] { color: #fff; border-bottom-color: #60a5fa; }
+    .nav-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      line-height: 1.5;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #fff;
+    }
+    .appbar-actions { margin-left: auto; }
+    .btn-on-dark {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+    .btn-on-dark:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); }
+
+    /* ===== Page ===== */
+    .page { max-width: 1280px; margin: 0 auto; padding: 28px 24px 64px; }
+    .page-head { margin-bottom: 20px; }
+    .page-head h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.02em; }
+    .page-head p { margin: 2px 0 0; color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat {
+      text-align: left;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+    }
+    button.stat { cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+    button.stat:hover { border-color: var(--brand-300); box-shadow: var(--shadow); }
+    button.stat:focus-visible { outline: none; box-shadow: var(--ring); }
+    .stat-label, .stat-value, .stat-note { display: block; }
+    .stat-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .stat-value {
+      margin-top: 2px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-note { font-size: 0.8rem; color: var(--faint); }
+    .stat.alert { border-color: #fecaca; }
+    .stat.alert .stat-value { color: var(--bad); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+    }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .appbar-inner { gap: 16px; padding: 0 16px; }
+      .brand-sub, .appbar-actions .label { display: none; }
+      .page { padding: 20px 16px 48px; }
+    }
+
+    /* ===== Controls ===== */
+    .input, .select {
+      height: 38px;
+      padding: 0 12px;
+      background: #fff;
+      border: 1px solid var(--line-2);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .input:focus, .select:focus { border-color: var(--brand-600); box-shadow: var(--ring); }
+    .input::placeholder { color: var(--faint); }
+    textarea.input { height: auto; min-height: 76px; padding: 8px 12px; resize: vertical; }
+    .select.sm { height: 32px; padding: 0 8px; font-size: 0.85rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 14px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:focus-visible { outline: none; box-shadow: var(--ring); }
+    .btn-primary { background: var(--brand-600); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--brand-700); }
+    .btn-secondary { background: #fff; color: var(--ink-2); border-color: var(--line-2); }
+    .btn-secondary:hover:not(:disabled) { background: var(--surface-2); border-color: var(--faint); }
+    .btn-danger { background: #fff; color: var(--bad); border-color: #fecaca; }
+    .btn-danger:hover:not(:disabled) { background: var(--bad-50); border-color: var(--bad); }
+    .btn-sm { height: 30px; padding: 0 10px; font-size: 0.8rem; }
+
+    .link-btn {
+      padding: 0;
+      border: none;
+      background: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--brand-600);
+      cursor: pointer;
+    }
+    .link-btn:hover { text-decoration: underline; }
+    .link-btn.danger { color: var(--bad); }
+    .link-btn.muted { color: var(--muted); }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--muted);
+      font-size: 1.3rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+    /* ===== Catalog toolbar ===== */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .search-box { position: relative; flex: 1; min-width: 220px; }
+    .search-box svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--faint);
+      pointer-events: none;
+    }
+    .search-box .input { width: 100%; padding-left: 34px; }
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--line-2);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--ink-2);
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+    .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--brand-600); }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .chip {
+      padding: 4px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .chip:hover { border-color: var(--brand-300); color: var(--brand-700); }
+    .chip[aria-pressed="true"] { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
+    .chip .count { margin-left: 5px; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
+
+    .list-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 20px 0;
+    }
+    .result-meta { color: var(--muted); font-size: 0.875rem; }
+    .list-tools { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 0.82rem; }
+    .list-tools label { display: flex; align-items: center; gap: 8px; }
+
+    /* ===== Book cards ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 14px;
+      padding: 16px 20px 4px;
+    }
+    .book {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .book:hover { border-color: var(--line-2); box-shadow: var(--shadow); }
+    .book.editing { border-color: var(--brand-600); box-shadow: var(--ring); }
+    .cover {
+      width: 76px;
+      height: 112px;
+      border-radius: 4px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: var(--surface-2);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18), inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+    }
+    .cover img { width: 100%; height: 100%; object-fit: cover; }
+    .cover.placeholder { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.02em; }
+    .book-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .book-title {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 650;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .book-author { margin-top: -4px; color: var(--muted); font-size: 0.84rem; }
+    .meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--ink-2);
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .badge.brand { background: var(--brand-50); border-color: var(--brand-100); color: var(--brand-700); }
+    .badge.muted { color: var(--muted); font-weight: 500; }
+    .code {
+      padding: 1px 6px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--ink-2);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+    .avail { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--ok); }
+    .avail .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .avail .sub { color: var(--faint); font-weight: 500; }
+    .avail.none { color: var(--bad); }
+    .book-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 4px; }
+
+    .state {
+      grid-column: 1 / -1;
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line-2);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+    }
+    .state strong { display: block; margin-bottom: 2px; font-size: 1rem; color: var(--ink); }
+    .state.error { border-color: #fecaca; background: var(--bad-50); }
+    .state.error strong { color: var(--bad); }
+
+    /* ===== Pager ===== */
+    .pager {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+    }
+    .pager-info { color: var(--muted); font-size: 0.82rem; }
+    .pager-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+    .page-btn {
+      min-width: 34px;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--line-2);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--ink-2);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--brand-300); color: var(--brand-700); }
+    .page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .page-btn.current { background: var(--brand-600); border-color: var(--brand-600); color: #fff; opacity: 1; cursor: default; }
+    .page-gap { padding: 0 4px; color: var(--faint); }
+
+    /* ===== Book form ===== */
+    .panel.editing { border-color: var(--brand-600); box-shadow: var(--ring); }
+    .panel-head { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-size: 1.05rem; letter-spacing: -0.01em; }
+    .panel-head p { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
+    .panel-body { padding: 18px 20px 6px; }
+    .section-label {
+      margin: 0 0 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+    .section:not(:first-child) { margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; margin-bottom: 5px; font-size: 0.8rem; font-weight: 600; color: var(--ink-2); }
+    .field .opt { font-weight: 400; color: var(--faint); }
+    .field .input, .field .select { width: 100%; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field.invalid .input, .field.invalid .select { border-color: var(--bad); background: var(--bad-50); }
+    .field-error { display: none; margin-top: 4px; font-size: 0.78rem; color: var(--bad); }
+    .field.invalid .field-error { display: block; }
+    .field-hint { margin-top: 4px; font-size: 0.75rem; color: var(--faint); }
+    .form-error {
+      display: none;
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      background: var(--bad-50);
+      color: var(--bad);
+      font-size: 0.84rem;
+    }
+    .form-error.show { display: block; }
+    #f-shelf { font-family: var(--mono); text-transform: uppercase; }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+      background: var(--surface-2);
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    .form-actions .btn-primary { flex: 1; }
+
+    .cover-picker { display: flex; align-items: center; gap: 12px; }
+    .cover-preview {
+      flex: none;
+      width: 60px;
+      height: 88px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px dashed var(--line-2);
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--faint);
+      font-size: 0.68rem;
+      text-align: center;
+    }
+    .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .cover-picker-body { flex: 1; min-width: 0; }
+    .cover-picker-body .btn { display: inline-flex; margin: 0; color: var(--ink-2); font-size: 0.8rem; }
+    .cover-picker-body .link-btn { margin-top: 4px; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .sr-only:focus-visible + .btn { box-shadow: var(--ring); }
+    .file-name {
+      margin-top: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      color: var(--ink-2);
+    }
+
+    /* ===== Loans ===== */
+    .segmented {
+      display: inline-flex;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+    }
+    .segmented button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .segmented button:hover { color: var(--ink); }
+    .segmented button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1); }
+    .segmented .count {
+      padding: 0 7px;
+      border-radius: 999px;
+      background: var(--line);
+      color: var(--ink-2);
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .segmented .count.alert { background: var(--bad-100); color: var(--bad); }
+
+    .table-wrap { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .table th {
+      padding: 10px 16px;
+      text-align: left;
+      white-space: nowrap;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .table td { padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .table tbody tr:hover td { background: #fafbfd; }
+    .table .cell-main { font-weight: 600; color: var(--ink); }
+    .table .cell-sub { font-size: 0.8rem; color: var(--muted); }
+    .table .cell-sub.bad { color: var(--bad); font-weight: 600; }
+    .table .nowrap { white-space: nowrap; }
+    .table .empty { padding: 48px 16px; text-align: center; color: var(--muted); }
+    .table .empty strong { display: block; color: var(--ink); }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status.active { background: var(--brand-50); color: var(--brand-700); }
+    .status.overdue { background: var(--bad-50); color: var(--bad); }
+    .status.returned { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+    .hint { padding: 0 20px 16px; color: var(--faint); font-size: 0.8rem; }
+
+    /* ===== Lend dialog ===== */
+    dialog.modal {
+      width: min(460px, calc(100vw - 32px));
+      padding: 0;
+      border: 0;
+      border-radius: 12px;
+      color: var(--ink);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+    }
+    dialog.modal::backdrop { background: rgba(15, 23, 42, 0.45); }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-head h2 { margin: 0; font-size: 1.05rem; }
+    .modal-body { padding: 18px 20px 6px; }
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .lend-book {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+    }
+    .lend-book .cover { width: 44px; height: 64px; }
+    .lend-book .cover.placeholder { font-size: 0.85rem; }
+    .lend-book-title { font-weight: 650; line-height: 1.3; }
+    .lend-book-sub { color: var(--muted); font-size: 0.8rem; }
+
+    /* ===== Categories drawer ===== */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(15, 23, 42, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      width: min(420px, 100vw);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border-left: 1px solid var(--line);
+      box-shadow: -12px 0 32px rgba(15, 23, 42, 0.15);
+      transform: translateX(100%);
+      visibility: hidden;
+      transition: transform 0.25s ease, visibility 0.25s;
+    }
+    .drawer.open { transform: translateX(0); visibility: visible; }
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    .drawer-head h2 { margin: 0; font-size: 1.05rem; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 18px; }
+    .category-form { margin-bottom: 18px; padding: 16px; }
+    .category-form h3 { margin: 0 0 12px; font-size: 0.95rem; }
+    .category-form .actions { display: flex; gap: 8px; }
+    .category-form .actions .btn-primary { flex: 1; }
+    .cat-item { margin-bottom: 10px; padding: 14px; }
+    .cat-item.editing, .category-form.editing { border-color: var(--brand-600); box-shadow: var(--ring); }
+    .cat-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .cat-item-name { font-weight: 700; }
+    .cat-item-count { color: var(--faint); font-size: 0.78rem; white-space: nowrap; }
+    .cat-item-desc { margin: 2px 0 10px; color: var(--muted); font-size: 0.85rem; }
+    .cat-item-desc.empty { font-style: italic; color: var(--faint); }
+    .cat-item-actions { display: flex; gap: 14px; }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 60;
+      max-width: min(420px, calc(100vw - 48px));
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.875rem;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--bad); }
+  </style>
+</head>
+<body>
+
+  <header class="appbar">
+    <div class="appbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">BookShelf</div>
+          <span class="brand-sub">Library desk</span>
+        </div>
+      </div>
+      <nav class="mainnav" aria-label="Main">
+        <a href="#catalog" id="nav-catalog">Catalog</a>
+        <a href="#loans" id="nav-loans">Loans <span class="nav-badge" id="overdue-badge" title="Overdue loans" hidden>0</span></a>
+      </nav>
+      <div class="appbar-actions">
+        <button type="button" class="btn btn-on-dark" id="categories-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <span class="label">Manage categories</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Catalog view ===== -->
+  <main class="page" id="view-catalog">
+    <div class="page-head">
+      <h1>Catalog</h1>
+      <p>Browse the collection, lend copies and keep book records up to date.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-label">Titles</span>
+        <span class="stat-value" id="stat-titles">–</span>
+        <span class="stat-note">in the collection</span>
+      </div>
+      <button type="button" class="stat" data-go-status="ACTIVE">
+        <span class="stat-label">On loan</span>
+        <span class="stat-value" id="stat-active">–</span>
+        <span class="stat-note">copies currently out</span>
+      </button>
+      <button type="button" class="stat" id="stat-overdue-card" data-go-status="OVERDUE">
+        <span class="stat-label">Overdue</span>
+        <span class="stat-value" id="stat-overdue">–</span>
+        <span class="stat-note">past their due date</span>
+      </button>
+      <button type="button" class="stat" data-go-status="RETURNED">
+        <span class="stat-label">Returned</span>
+        <span class="stat-value" id="stat-returned">–</span>
+        <span class="stat-note">closed loan records</span>
+      </button>
+    </div>
+
+    <div class="layout">
+      <section class="panel" aria-labelledby="catalog-heading">
+        <h2 id="catalog-heading" hidden>Collection</h2>
+        <div class="toolbar">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input id="catalog-search" class="input" type="search" placeholder="Search title, author, ISBN or shelf…" autocomplete="off" aria-label="Search the catalog">
+          </div>
+          <select id="language-filter" class="select" aria-label="Filter by language">
+            <option value="">All languages</option>
+          </select>
+          <label class="check"><input type="checkbox" id="available-only"> Available only</label>
+        </div>
+        <div class="chips" id="category-chips" role="group" aria-label="Filter by category"></div>
+        <div class="list-head">
+          <span class="result-meta" id="catalog-meta"></span>
+          <div class="list-tools">
+            <label>Sort
+              <select id="sort-select" class="select sm">
+                <option value="title,asc">Title A–Z</option>
+                <option value="title,desc">Title Z–A</option>
+                <option value="author,asc">Author A–Z</option>
+                <option value="shelfLocation,asc">Shelf location</option>
+                <option value="copiesAvailable,desc">Most copies available</option>
+                <option value="id,desc">Recently added</option>
+              </select>
+            </label>
+            <label>Show
+              <select id="size-select" class="select sm">
+                <option value="8">8</option>
+                <option value="12" selected>12</option>
+                <option value="24">24</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="grid" class="grid" aria-live="polite"></div>
+        <nav class="pager" id="pager" aria-label="Catalog pages" hidden></nav>
+      </section>
+
+      <aside class="panel" id="book-card" aria-labelledby="form-heading">
+        <div class="panel-head">
+          <h2 id="form-heading">Add to collection</h2>
+          <p id="form-sub">Create a catalog record for a new title.</p>
+        </div>
+
+        <div class="panel-body">
+          <div id="form-error" class="form-error" role="alert"></div>
+
+          <form id="book-form" novalidate>
+            <div class="section">
+              <p class="section-label">Book details</p>
+              <div class="field" data-field="title">
+                <label for="f-title">Title</label>
+                <input id="f-title" class="input" name="title" type="text">
+                <div class="field-error"></div>
+              </div>
+              <div class="field" data-field="author">
+                <label for="f-author">Author</label>
+                <input id="f-author" class="input" name="author" type="text">
+                <div class="field-error"></div>
+              </div>
+              <div class="field" data-field="description">
+                <label for="f-description">Description <span class="opt">(optional)</span></label>
+                <textarea id="f-description" class="input" name="description" maxlength="2000"></textarea>
+                <div class="field-error"></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <p class="section-label">Catalog record</p>
+              <div class="field-row">
+                <div class="field" data-field="language">
+                  <label for="f-language">Language</label>
+                  <input id="f-language" class="input" name="language" type="text" value="English" list="language-options" maxlength="40">
+                  <datalist id="language-options"></datalist>
+                  <div class="field-error"></div>
+                </div>
+                <div class="field" data-field="shelfLocation">
+                  <label for="f-shelf">Shelf <span class="opt">(optional)</span></label>
+                  <input id="f-shelf" class="input" name="shelfLocation" type="text" placeholder="FIC-ORW-01" maxlength="20">
+                  <div class="field-error"></div>
+                </div>
+              </div>
+              <div class="field" data-field="isbn">
+                <label for="f-isbn">ISBN <span class="opt">(optional)</span></label>
+                <input id="f-isbn" class="input" name="isbn" type="text" placeholder="978-…">
+                <div class="field-error"></div>
+              </div>
+              <div class="field" data-field="categoryId">
+                <label for="f-categoryId">Category <span class="opt">(optional)</span></label>
+                <select id="f-categoryId" class="select" name="categoryId">
+                  <option value="">No category</option>
+                </select>
+                <div class="field-error"></div>
+                <div class="field-hint" id="category-hint" hidden>Create categories with “Manage categories” in the top bar.</div>
+              </div>
+            </div>
+
+            <div class="section">
+              <p class="section-label">Holdings</p>
+              <div class="field-row">
+                <div class="field" data-field="copiesAvailable">
+                  <label for="f-copies">Copies on shelf</label>
+                  <input id="f-copies" class="input" name="copiesAvailable" type="number" step="1" min="0" inputmode="numeric">
+                  <div class="field-error"></div>
+                </div>
+                <div class="field" data-field="replacementCost">
+                  <label for="f-cost">Replacement cost ($)</label>
+                  <input id="f-cost" class="input" name="replacementCost" type="number" step="0.01" min="0.01" inputmode="decimal">
+                  <div class="field-error"></div>
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <!-- Sent to POST /api/books/{id}/cover after the book is saved -->
+          <form id="cover-form" class="section" enctype="multipart/form-data" novalidate>
+            <p class="section-label">Cover image</p>
+            <div class="field" data-field="file">
+              <div class="cover-picker">
+                <div class="cover-preview" id="cover-preview">No cover</div>
+                <div class="cover-picker-body">
+                  <input id="f-cover" class="sr-only" name="file" type="file" accept="image/jpeg,image/png,image/gif,image/webp">
+                  <label for="f-cover" class="btn btn-secondary btn-sm">Choose image…</label>
+                  <div class="file-name" id="cover-name">No file chosen</div>
+                  <div class="field-hint">JPEG, PNG, GIF or WEBP, up to 5 MB.</div>
+                  <button type="button" class="link-btn danger" id="cover-remove" hidden>Remove cover</button>
+                </div>
+              </div>
+              <div class="field-error"></div>
+            </div>
+          </form>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="cancel-edit-btn" hidden>Cancel</button>
+          <button type="submit" form="book-form" class="btn btn-primary" id="submit-btn">Add to collection</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ===== Loans view ===== -->
+  <main class="page" id="view-loans" hidden>
+    <div class="page-head">
+      <h1>Loans</h1>
+      <p>Track borrowed copies, due dates and returns.</p>
+    </div>
+
+    <section class="panel" aria-label="Loan records">
+      <div class="toolbar">
+        <div class="segmented" id="loan-tabs" role="tablist" aria-label="Loan status">
+          <button type="button" role="tab" data-status="ACTIVE" aria-selected="true">On loan <span class="count" data-count="ACTIVE">0</span></button>
+          <button type="button" role="tab" data-status="OVERDUE" aria-selected="false">Overdue <span class="count" data-count="OVERDUE">0</span></button>
+          <button type="button" role="tab" data-status="RETURNED" aria-selected="false">Returned <span class="count" data-count="RETURNED">0</span></button>
+          <button type="button" role="tab" data-status="ALL" aria-selected="false">All <span class="count" data-count="ALL">0</span></button>
+        </div>
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="loan-search" class="input" type="search" placeholder="Search borrower, email or title…" autocomplete="off" aria-label="Search loans">
+        </div>
+        <select id="loan-sort" class="select" aria-label="Sort loans">
+          <option value="dueDate,asc">Due date (soonest)</option>
+          <option value="loanDate,desc">Loan date (newest)</option>
+          <option value="returnedAt,desc">Return date (newest)</option>
+          <option value="borrowerName,asc">Borrower A–Z</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Book</th>
+              <th scope="col">Borrower</th>
+              <th scope="col">Loaned</th>
+              <th scope="col">Due</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span hidden>Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="loans-body"></tbody>
+        </table>
+      </div>
+      <nav class="pager" id="loans-pager" aria-label="Loan pages" hidden></nav>
+      <p class="hint">To lend a copy, use <strong>Lend</strong> on a book in the Catalog.</p>
+    </section>
+  </main>
+
+  <!-- ===== Lend dialog ===== -->
+  <dialog class="modal" id="lend-dialog" aria-labelledby="lend-heading">
+    <form id="lend-form" novalidate>
+      <div class="modal-head">
+        <h2 id="lend-heading">Lend a copy</h2>
+        <button type="button" class="icon-btn" id="lend-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="lend-book" id="lend-book"></div>
+        <div id="lend-error" class="form-error" role="alert"></div>
+        <div class="field" data-field="borrowerName">
+          <label for="l-name">Borrower name</label>
+          <input id="l-name" class="input" name="borrowerName" type="text" maxlength="100" autocomplete="off">
+          <div class="field-error"></div>
+        </div>
+        <div class="field" data-field="borrowerEmail">
+          <label for="l-email">Borrower email</label>
+          <input id="l-email" class="input" name="borrowerEmail" type="email" autocomplete="off">
+          <div class="field-error"></div>
+        </div>
+        <div class="field" data-field="days">
+          <label for="l-days">Loan period</label>
+          <select id="l-days" class="select" name="days">
+            <option value="7">1 week</option>
+            <option value="14" selected>2 weeks</option>
+            <option value="21">3 weeks</option>
+            <option value="28">4 weeks</option>
+          </select>
+          <div class="field-hint" id="due-preview"></div>
+          <div class="field-error"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="lend-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="lend-submit">Confirm loan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===== Categories drawer ===== -->
+  <div id="drawer-backdrop" class="drawer-backdrop"></div>
+  <aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-heading">
+    <div class="drawer-head">
+      <h2 id="drawer-heading">Categories</h2>
+      <button type="button" class="icon-btn" id="drawer-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <form id="category-form" class="panel category-form" novalidate>
+        <h3 id="category-form-heading">New category</h3>
+        <div id="category-error" class="form-error" role="alert"></div>
+        <div class="field" data-field="name">
+          <label for="cat-name">Name</label>
+          <input id="cat-name" class="input" name="name" type="text" maxlength="100">
+          <div class="field-error"></div>
+        </div>
+        <div class="field" data-field="description">
+          <label for="cat-description">Description <span class="opt">(optional)</span></label>
+          <input id="cat-description" class="input" name="description" type="text" maxlength="255">
+          <div class="field-error"></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" id="category-cancel" hidden>Cancel</button>
+          <button type="submit" class="btn btn-primary" id="category-submit">Add category</button>
+        </div>
+      </form>
+      <div id="categories-list"></div>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const API = '/api/books';
+      const CATEGORIES_API = '/api/categories';
+      const LOANS_API = '/api/loans';
+      const BOOK_FIELDS = ['title', 'author', 'description', 'language', 'shelfLocation', 'isbn', 'categoryId', 'copiesAvailable', 'replacementCost'];
+      const MAX_COVER_BYTES = 5 * 1024 * 1024; // spring.servlet.multipart.max-file-size
+      const COVER_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      // Default loan list order per status tab
+      const LOAN_SORT = { ACTIVE: 'dueDate,asc', OVERDUE: 'dueDate,asc', RETURNED: 'returnedAt,desc', ALL: 'loanDate,desc' };
+
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        // Navigation
+        navCatalog: $('nav-catalog'),
+        navLoans: $('nav-loans'),
+        overdueBadge: $('overdue-badge'),
+        viewCatalog: $('view-catalog'),
+        viewLoans: $('view-loans'),
+        // Stats
+        statTitles: $('stat-titles'),
+        statActive: $('stat-active'),
+        statOverdue: $('stat-overdue'),
+        statOverdueCard: $('stat-overdue-card'),
+        statReturned: $('stat-returned'),
+        // Catalog
+        search: $('catalog-search'),
+        languageFilter: $('language-filter'),
+        availableOnly: $('available-only'),
+        chips: $('category-chips'),
+        meta: $('catalog-meta'),
+        sortSelect: $('sort-select'),
+        sizeSelect: $('size-select'),
+        grid: $('grid'),
+        pager: $('pager'),
+        // Book form
+        card: $('book-card'),
+        form: $('book-form'),
+        formError: $('form-error'),
+        formHeading: $('form-heading'),
+        formSub: $('form-sub'),
+        submitBtn: $('submit-btn'),
+        cancelEditBtn: $('cancel-edit-btn'),
+        categorySelect: $('f-categoryId'),
+        categoryHint: $('category-hint'),
+        languageOptions: $('language-options'),
+        coverForm: $('cover-form'),
+        coverInput: $('f-cover'),
+        coverPreview: $('cover-preview'),
+        coverName: $('cover-name'),
+        coverRemove: $('cover-remove'),
+        // Loans
+        loanTabs: $('loan-tabs'),
+        loanSearch: $('loan-search'),
+        loanSort: $('loan-sort'),
+        loansBody: $('loans-body'),
+        loansPager: $('loans-pager'),
+        // Lend dialog
+        lendDialog: $('lend-dialog'),
+        lendForm: $('lend-form'),
+        lendBook: $('lend-book'),
+        lendError: $('lend-error'),
+        lendDays: $('l-days'),
+        duePreview: $('due-preview'),
+        lendSubmit: $('lend-submit'),
+        lendCancel: $('lend-cancel'),
+        lendClose: $('lend-close'),
+        // Categories drawer
+        categoriesBtn: $('categories-btn'),
+        drawer: $('drawer'),
+        backdrop: $('drawer-backdrop'),
+        drawerClose: $('drawer-close'),
+        categoryForm: $('category-form'),
+        categoryFormHeading: $('category-form-heading'),
+        categoryError: $('category-error'),
+        categoryCancel: $('category-cancel'),
+        categorySubmit: $('category-submit'),
+        categoriesList: $('categories-list'),
+        toast: $('toast'),
+      };
+
+      let categories = [];
+      let totalBooks = 0;
+      let summary = { active: 0, overdue: 0, returned: 0 };
+      let bookSeq = 0;
+      let loanSeq = 0;
+      let searchTimer = null;
+      let loanSearchTimer = null;
+      let editingId = null;
+      let editingCategoryId = null;
+      // Catalog filters; the keyword lives in the search input. Paging is zero-based like Spring's Pageable.
+      const filters = { categoryId: null, language: '', availableOnly: false };
+      const paging = { page: 0, size: Number(els.sizeSelect.value), sort: els.sortSelect.value };
+      const loanQuery = { status: 'ACTIVE', page: 0, size: 10, sort: LOAN_SORT.ACTIVE };
+
+      // ===== Helpers =====
+
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text != null) node.textContent = text;
+        return node;
+      }
+
+      function plural(n, word) {
+        return `${n} ${word}${n === 1 ? '' : 's'}`;
+      }
+
+      async function readBody(res) {
+        const text = await res.text();
+        if (!text) return null;
+        try { return JSON.parse(text); } catch { return text; }
+      }
+
+      function serverMessage(body) {
+        const msg = body && typeof body === 'object' ? body.message || body.error : body;
+        return msg ? String(msg) : '';
+      }
+
+      async function fetchJson(url) {
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(serverMessage(await readBody(res)) || `Server responded with ${res.status}`);
+        return (await res.json()) || [];
+      }
+
+      async function send(method, url, payload) {
+        const res = await fetch(url, {
+          method,
+          headers: payload === undefined ? { Accept: 'application/json' } : { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: payload === undefined ? undefined : JSON.stringify(payload),
+        });
+        return { res, body: await readBody(res) };
+      }
+
+      // GET /api/books returns flat categoryId/categoryName; GET /api/books/{id} returns a nested category.
+      function normalizeBook(book) {
+        const cat = book.category || null;
+        return {
+          ...book,
+          categoryId: book.categoryId != null ? book.categoryId : cat ? cat.id : null,
+          categoryName: book.categoryName != null ? book.categoryName : cat ? cat.name : null,
+        };
+      }
+
+      function coverUrl(book) {
+        return `${API}/${encodeURIComponent(book.id)}/cover?v=${encodeURIComponent(book.coverImageFileName)}`;
+      }
+
+      // LocalDate arrives as "2026-11-25" (or [2026, 11, 25] with older Jackson settings).
+      function parseDate(value) {
+        if (!value) return null;
+        const [y, m, d] = Array.isArray(value) ? value : String(value).split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function today() {
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      }
+
+      function daysFromToday(date) {
+        return Math.round((date - today()) / 86400000);
+      }
+
+      // Fixed locale so dates read the same on every desk, e.g. "26 Oct 2026".
+      const DATE_LOCALE = 'en-GB';
+
+      function formatDate(value) {
+        const d = value instanceof Date ? value : parseDate(value);
+        return d ? d.toLocaleDateString(DATE_LOCALE, { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+      }
+
+      let toastTimer = null;
+      function toast(message, isError) {
+        els.toast.textContent = message;
+        els.toast.classList.toggle('error', !!isError);
+        els.toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => els.toast.classList.remove('show'), isError ? 5000 : 3200);
+      }
+
+      // ===== Form errors (shared by the book, lend and category forms) =====
+
+      function clearErrors(scope, box) {
+        box.classList.remove('show');
+        box.textContent = '';
+        scope.querySelectorAll('.field.invalid').forEach((f) => {
+          f.classList.remove('invalid');
+          f.querySelector('.field-error').textContent = '';
+        });
+      }
+
+      function setFieldError(scope, name, message) {
+        const field = scope.querySelector(`.field[data-field="${name}"]`);
+        if (!field) return false;
+        const box = field.querySelector('.field-error');
+        box.textContent = box.textContent ? box.textContent + ' ' + message : message;
+        field.classList.add('invalid');
+        return true;
+      }
+
+      function showError(box, message) {
+        box.textContent = message;
+        box.classList.add('show');
+      }
+
+      // Normalizes the common Spring error shapes into { field: [messages] }.
+      function extractFieldErrors(body, fields) {
+        const out = {};
+        if (!body || typeof body !== 'object') return out;
+        const add = (field, msg) => {
+          if (!field || msg == null) return;
+          const key = String(field).split('.').pop();
+          (out[key] = out[key] || []).push(Array.isArray(msg) ? msg.join(', ') : String(msg));
+        };
+        [body.errors, body.fieldErrors, body.violations, body.details].forEach((src) => {
+          if (Array.isArray(src)) {
+            src.forEach((e) => {
+              if (e && typeof e === 'object') add(e.field || e.propertyPath || e.name, e.defaultMessage || e.message || e.msg);
+            });
+          } else if (src && typeof src === 'object') {
+            Object.entries(src).forEach(([f, m]) => add(f, m));
+          }
+        });
+        if (!Object.keys(out).length && fields) {
+          fields.forEach((f) => {
+            if (typeof body[f] === 'string' || Array.isArray(body[f])) add(f, body[f]);
+          });
+        }
+        return out;
+      }
+
+      // Shows 400 validation errors next to their fields; returns false if the body had none.
+      function applyFieldErrors(scope, box, body, fields) {
+        const fieldErrors = extractFieldErrors(body, fields);
+        if (!Object.keys(fieldErrors).length) return false;
+        const unmatched = [];
+        Object.entries(fieldErrors).forEach(([field, msgs]) => {
+          msgs.forEach((m) => { if (!setFieldError(scope, field, m)) unmatched.push(m); });
+        });
+        if (unmatched.length) showError(box, unmatched.join(' · '));
+        const first = scope.querySelector('.field.invalid input, .field.invalid textarea, .field.invalid select');
+        if (first) first.focus();
+        return true;
+      }
+
+      // ===== Views =====
+
+      function currentView() {
+        return location.hash === '#loans' ? 'loans' : 'catalog';
+      }
+
+      function route() {
+        const view = currentView();
+        els.viewCatalog.hidden = view !== 'catalog';
+        els.viewLoans.hidden = view !== 'loans';
+        els.navCatalog.removeAttribute('aria-current');
+        els.navLoans.removeAttribute('aria-current');
+        (view === 'loans' ? els.navLoans : els.navCatalog).setAttribute('aria-current', 'page');
+        document.title = (view === 'loans' ? 'Loans' : 'Catalog') + ' · BookShelf';
+        if (view === 'loans') loadLoans();
+      }
+
+      window.addEventListener('hashchange', route);
+
+      // ===== Dashboard numbers =====
+
+      async function loadSummary() {
+        try {
+          summary = await fetchJson(`${LOANS_API}/summary`);
+        } catch (err) {
+          toast('Could not load loan totals: ' + err.message, true);
+          return;
+        }
+        renderSummary();
+      }
+
+      function renderSummary() {
+        els.statTitles.textContent = totalBooks;
+        els.statActive.textContent = summary.active;
+        els.statOverdue.textContent = summary.overdue;
+        els.statReturned.textContent = summary.returned;
+        els.statOverdueCard.classList.toggle('alert', summary.overdue > 0);
+        els.overdueBadge.textContent = summary.overdue;
+        els.overdueBadge.hidden = !summary.overdue;
+
+        const counts = { ACTIVE: summary.active, OVERDUE: summary.overdue, RETURNED: summary.returned, ALL: summary.active + summary.returned };
+        els.loanTabs.querySelectorAll('[data-count]').forEach((c) => {
+          c.textContent = counts[c.dataset.count];
+          c.classList.toggle('alert', c.dataset.count === 'OVERDUE' && summary.overdue > 0);
+        });
+      }
+
+      document.querySelectorAll('[data-go-status]').forEach((card) => {
+        card.addEventListener('click', () => {
+          selectLoanTab(card.dataset.goStatus, false);
+          location.hash = '#loans';
+        });
+      });
+
+      // ===== Catalog rendering =====
+
+      function renderState(container, title, detail, isError) {
+        const box = el('div', 'state' + (isError ? ' error' : ''));
+        box.appendChild(el('strong', null, title));
+        if (detail) box.appendChild(el('span', null, detail));
+        container.replaceChildren(box);
+      }
+
+      function hasFilters() {
+        return !!els.search.value.trim() || filters.categoryId != null || !!filters.language || filters.availableOnly;
+      }
+
+      function describeFilters() {
+        const parts = [];
+        const keyword = els.search.value.trim();
+        if (keyword) parts.push(`“${keyword}”`);
+        if (filters.categoryId != null) {
+          const cat = categories.find((c) => c.id === filters.categoryId);
+          parts.push(cat ? cat.name : 'category #' + filters.categoryId);
+        }
+        if (filters.language) parts.push(filters.language);
+        if (filters.availableOnly) parts.push('available now');
+        return parts.join(' · ');
+      }
+
+      // result is Spring's paged JSON: { content: [...], page: { number, size, totalElements, totalPages } }
+      function renderBooks(result) {
+        const books = (result.content || []).map(normalizeBook);
+        const info = result.page || { number: 0, size: books.length, totalElements: books.length, totalPages: 1 };
+        const total = info.totalElements;
+        const filtered = hasFilters();
+        els.meta.textContent = filtered
+          ? `${plural(total, 'result')} for ${describeFilters()}`
+          : `${plural(total, 'title')} in the collection`;
+        renderPager(els.pager, info, 'title', goToPage);
+
+        if (!books.length) {
+          renderState(
+            els.grid,
+            filtered ? 'No matching titles' : 'The collection is empty',
+            filtered ? 'Try a different search or clear the filters.' : 'Add the first title with the form on the right.'
+          );
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        books.forEach((book) => frag.appendChild(bookCard(book)));
+        els.grid.replaceChildren(frag);
+      }
+
+      // Zero-based page indexes to show, with null marking a gap: e.g. [0, null, 4, 5, 6, null, 9]
+      function pageNumbers(current, total) {
+        if (total <= 7) return [...Array(total).keys()];
+        const start = Math.max(1, Math.min(current - 1, total - 4));
+        const end = Math.min(total - 2, Math.max(current + 1, 3));
+        const pages = [0];
+        if (start > 1) pages.push(null);
+        for (let p = start; p <= end; p++) pages.push(p);
+        if (end < total - 2) pages.push(null);
+        pages.push(total - 1);
+        return pages;
+      }
+
+      function renderPager(nav, { number, size, totalElements, totalPages }, noun, onGo) {
+        if (!totalElements) {
+          nav.hidden = true;
+          nav.replaceChildren();
+          return;
+        }
+        const from = number * size + 1;
+        const to = Math.min(totalElements, from + size - 1);
+        const info = el('span', 'pager-info', `Showing ${from}–${to} of ${plural(totalElements, noun)}`);
+
+        const button = (label, page, ariaLabel, current) => {
+          const b = el('button', 'page-btn' + (current ? ' current' : ''), label);
+          b.type = 'button';
+          b.setAttribute('aria-label', ariaLabel);
+          if (current) b.setAttribute('aria-current', 'page');
+          b.disabled = current || page < 0 || page >= totalPages;
+          b.addEventListener('click', () => onGo(page));
+          return b;
+        };
+
+        const controls = el('div', 'pager-controls');
+        controls.appendChild(button('‹ Prev', number - 1, 'Previous page'));
+        pageNumbers(number, totalPages).forEach((p) => {
+          controls.appendChild(p === null
+            ? el('span', 'page-gap', '…')
+            : button(String(p + 1), p, `Page ${p + 1}`, p === number));
+        });
+        controls.appendChild(button('Next ›', number + 1, 'Next page'));
+
+        nav.replaceChildren(info, controls);
+        nav.hidden = false;
+      }
+
+      function scrollToTop(target) {
+        if (target.getBoundingClientRect().top < 70) {
+          window.scrollTo({ top: window.scrollY + target.getBoundingClientRect().top - 80, behavior: 'smooth' });
+        }
+      }
+
+      function goToPage(page) {
+        paging.page = page;
+        loadBooks();
+        scrollToTop(els.grid);
+      }
+
+      function initials(title) {
+        const words = (title || '?').split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w));
+        return (words.slice(0, 2).map((w) => w.match(/[\p{L}\p{N}]/u)[0]).join('') || '?').toUpperCase();
+      }
+
+      // Stable pastel color per title for books without a cover.
+      function hueFor(text) {
+        let h = 0;
+        for (const ch of text || '') h = (h * 31 + ch.codePointAt(0)) % 360;
+        return h;
+      }
+
+      function coverElement(book) {
+        const cover = el('div', 'cover');
+        if (book.coverImageFileName) {
+          const img = el('img');
+          img.src = coverUrl(book);
+          img.alt = `Cover of ${book.title || 'book'}`;
+          img.loading = 'lazy';
+          cover.appendChild(img);
+        } else {
+          const hue = hueFor(book.title);
+          cover.classList.add('placeholder');
+          cover.style.background = `hsl(${hue} 45% 90%)`;
+          cover.style.color = `hsl(${hue} 35% 35%)`;
+          cover.setAttribute('aria-hidden', 'true');
+          cover.textContent = initials(book.title);
+        }
+        return cover;
+      }
+
+      function availabilityElement(book) {
+        const copies = Number(book.copiesAvailable) || 0;
+        const onLoan = Number(book.copiesOnLoan) || 0;
+        const avail = el('div', 'avail' + (copies === 0 ? ' none' : ''));
+        avail.appendChild(el('span', 'dot'));
+        avail.appendChild(el('span', null, copies === 0
+          ? (onLoan ? 'All copies on loan' : 'No copies on shelf')
+          : `${copies} available`));
+        if (onLoan && copies) avail.appendChild(el('span', 'sub', `· ${onLoan} on loan`));
+        return avail;
+      }
+
+      function bookCard(book) {
+        const card = el('article', 'book' + (book.id === editingId ? ' editing' : ''));
+        card.dataset.bookId = book.id;
+        card.appendChild(coverElement(book));
+
+        const body = el('div', 'book-body');
+        const title = el('h3', 'book-title', book.title || 'Untitled');
+        title.title = book.description || book.title || '';
+        body.appendChild(title);
+        body.appendChild(el('div', 'book-author', book.author || 'Unknown author'));
+
+        const meta = el('div', 'meta-row');
+        meta.appendChild(el('span', 'badge' + (book.categoryName ? ' brand' : ' muted'), book.categoryName || 'Uncategorized'));
+        if (book.language) meta.appendChild(el('span', 'badge', book.language));
+        if (book.shelfLocation) {
+          const shelf = el('span', 'code', book.shelfLocation);
+          shelf.title = 'Shelf location' + (book.isbn ? ` · ISBN ${book.isbn}` : '');
+          meta.appendChild(shelf);
+        }
+        (book.tags || []).forEach((t) => meta.appendChild(el('span', 'badge muted', t)));
+        body.appendChild(meta);
+        body.appendChild(availabilityElement(book));
+
+        const actions = el('div', 'book-actions');
+        const lend = el('button', 'btn btn-primary btn-sm', 'Lend');
+        lend.type = 'button';
+        lend.disabled = (Number(book.copiesAvailable) || 0) === 0;
+        lend.setAttribute('aria-label', `Lend ${book.title || 'book'}`);
+        lend.addEventListener('click', () => openLend(book));
+        const edit = el('button', 'btn btn-secondary btn-sm', 'Edit');
+        edit.type = 'button';
+        edit.setAttribute('aria-label', `Edit ${book.title || 'book'}`);
+        edit.addEventListener('click', () => startEdit(book, edit));
+        const del = el('button', 'btn btn-danger btn-sm', 'Remove');
+        del.type = 'button';
+        del.setAttribute('aria-label', `Remove ${book.title || 'book'} from the collection`);
+        del.addEventListener('click', () => deleteBook(book, del));
+        actions.append(lend, edit, del);
+        body.appendChild(actions);
+
+        card.appendChild(body);
+        return card;
+      }
+
+      // ===== Categories: form select + filter chips =====
+
+      function renderCategoryOptions() {
+        const current = els.categorySelect.value;
+        const none = el('option', null, 'No category');
+        none.value = '';
+        const opts = categories.map((c) => {
+          const opt = el('option', null, c.name);
+          opt.value = c.id;
+          return opt;
+        });
+        els.categorySelect.replaceChildren(none, ...opts);
+        if ([...els.categorySelect.options].some((o) => o.value === current)) els.categorySelect.value = current;
+        els.categoryHint.hidden = categories.length > 0;
+        syncNoCategoryOption();
+      }
+
+      // PUT /api/books/{id} keeps the existing category when categoryId is omitted, so it can't be cleared on edit.
+      function syncNoCategoryOption() {
+        const none = els.categorySelect.options[0];
+        const locked = editingId != null && editingCategoryId != null;
+        none.disabled = locked;
+        none.textContent = locked ? 'No category (can’t be removed once set)' : 'No category';
+      }
+
+      function renderChips() {
+        const chip = (label, id, count) => {
+          const b = el('button', 'chip', label);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', String(filters.categoryId === id));
+          b.appendChild(el('span', 'count', String(count)));
+          b.addEventListener('click', () => setCategoryFilter(id));
+          return b;
+        };
+        els.chips.replaceChildren(
+          chip('All', null, totalBooks),
+          ...categories.map((c) => chip(c.name, c.id, c.bookCount))
+        );
+      }
+
+      function setCategoryFilter(id) {
+        filters.categoryId = id;
+        renderChips();
+        reloadFromFirstPage();
+      }
+
+      // Categories come with their book counts; a size=1 page is the cheapest way to get the overall total.
+      async function loadCategories() {
+        try {
+          const [cats, firstPage] = await Promise.all([fetchJson(CATEGORIES_API), fetchJson(`${API}?size=1`)]);
+          categories = cats;
+          totalBooks = firstPage.page ? firstPage.page.totalElements : 0;
+        } catch (err) {
+          toast('Could not load categories: ' + err.message, true);
+          return;
+        }
+        if (filters.categoryId != null && !categories.some((c) => c.id === filters.categoryId)) {
+          filters.categoryId = null;
+        }
+        renderCategoryOptions();
+        renderChips();
+        renderCategoryList();
+        renderSummary();
+      }
+
+      async function loadLanguages() {
+        let languages;
+        try {
+          languages = await fetchJson(`${API}/languages`);
+        } catch {
+          return;
+        }
+        const current = els.languageFilter.value;
+        const all = el('option', null, 'All languages');
+        all.value = '';
+        els.languageFilter.replaceChildren(all, ...languages.map((lang) => {
+          const opt = el('option', null, lang);
+          opt.value = lang;
+          return opt;
+        }));
+        els.languageFilter.value = languages.includes(current) ? current : '';
+        if (els.languageFilter.value !== filters.language) {
+          filters.language = els.languageFilter.value;
+          reloadFromFirstPage();
+        }
+        els.languageOptions.replaceChildren(...languages.map((lang) => {
+          const opt = el('option');
+          opt.value = lang;
+          return opt;
+        }));
+      }
+
+      // ===== Catalog loading =====
+
+      // One request per page: filters, paging and sorting are all applied by GET /api/books on the server.
+      function booksUrl() {
+        const params = new URLSearchParams({ page: paging.page, size: paging.size, sort: paging.sort });
+        // Tie-breaker so books with equal titles or shelf codes don't swap between pages.
+        if (!paging.sort.startsWith('id,')) params.append('sort', 'id,asc');
+        const keyword = els.search.value.trim();
+        if (keyword) params.set('keyword', keyword);
+        if (filters.categoryId != null) params.set('categoryId', filters.categoryId);
+        if (filters.language) params.set('language', filters.language);
+        if (filters.availableOnly) params.set('availableOnly', 'true');
+        return `${API}?${params}`;
+      }
+
+      async function loadBooks() {
+        const seq = ++bookSeq;
+        if (!els.grid.children.length) renderState(els.grid, 'Loading catalog…');
+        els.grid.setAttribute('aria-busy', 'true');
+        try {
+          const result = await fetchJson(booksUrl());
+          if (seq !== bookSeq) return;
+          const info = result.page;
+          // A removal or a new filter can leave us past the last page; step back to it.
+          if (info && info.totalPages > 0 && paging.page >= info.totalPages) {
+            paging.page = info.totalPages - 1;
+            await loadBooks();
+            return;
+          }
+          renderBooks(result);
+        } catch (err) {
+          if (seq !== bookSeq) return;
+          els.meta.textContent = '';
+          els.pager.hidden = true;
+          renderState(els.grid, 'Could not load the catalog', err.message + '. Is the BookShelf API running?', true);
+        } finally {
+          if (seq === bookSeq) els.grid.removeAttribute('aria-busy');
+        }
+      }
+
+      function reloadFromFirstPage() {
+        paging.page = 0;
+        return loadBooks();
+      }
+
+      // Book changes affect category counts, languages and the dashboard as well as the current page.
+      function refreshCatalog() {
+        return Promise.all([loadCategories(), loadLanguages(), loadBooks(), loadSummary()]);
+      }
+
+      els.search.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(reloadFromFirstPage, 250);
+      });
+
+      els.languageFilter.addEventListener('change', () => {
+        filters.language = els.languageFilter.value;
+        reloadFromFirstPage();
+      });
+
+      els.availableOnly.addEventListener('change', () => {
+        filters.availableOnly = els.availableOnly.checked;
+        reloadFromFirstPage();
+      });
+
+      els.sortSelect.addEventListener('change', () => {
+        paging.sort = els.sortSelect.value;
+        reloadFromFirstPage();
+      });
+
+      els.sizeSelect.addEventListener('change', () => {
+        paging.size = Number(els.sizeSelect.value);
+        reloadFromFirstPage();
+      });
+
+      // ===== Remove a book =====
+
+      async function deleteBook(book, button) {
+        if (!confirm(`Remove “${book.title}” from the collection?\nIts loan history will be deleted too.`)) return;
+        button.disabled = true;
+        try {
+          const { res, body } = await send('DELETE', `${API}/${encodeURIComponent(book.id)}`);
+          if (!res.ok && res.status !== 404) throw new Error(serverMessage(body) || `server responded with ${res.status}`);
+          if (editingId === book.id) stopEdit();
+          toast(res.status === 404 ? 'That title was already removed.' : `Removed “${book.title}” from the collection.`);
+          await refreshCatalog();
+        } catch (err) {
+          button.disabled = false;
+          toast('Could not remove: ' + err.message, true);
+        }
+      }
+
+      // ===== Book form =====
+
+      function readForm() {
+        const data = new FormData(els.form);
+        const text = (k) => {
+          const v = (data.get(k) || '').toString().trim();
+          return v === '' ? null : v;
+        };
+        const num = (k) => {
+          const v = text(k);
+          return v === null ? null : Number(v);
+        };
+        const shelf = text('shelfLocation');
+        return {
+          book: {
+            title: text('title'),
+            author: text('author'),
+            description: text('description'),
+            language: text('language'),
+            shelfLocation: shelf && shelf.toUpperCase(),
+            isbn: text('isbn'),
+            copiesAvailable: num('copiesAvailable'),
+            replacementCost: num('replacementCost'),
+          },
+          categoryId: text('categoryId'),
+        };
+      }
+
+      // ===== Cover image =====
+
+      let previewUrl = null;
+      // The book being edited, so clearing the file input can fall back to its current cover.
+      let coverBook = null;
+      // Set by "Remove cover" while editing; the DELETE is only sent when the record is saved.
+      let removeCoverOnSave = false;
+
+      function hasSavedCover() {
+        return !!(coverBook && coverBook.coverImageFileName);
+      }
+
+      function showCoverPreview(src, emptyText) {
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          previewUrl = null;
+        }
+        if (!src) {
+          els.coverPreview.textContent = emptyText || 'No cover';
+          return;
+        }
+        const img = el('img');
+        img.src = src;
+        img.alt = 'Cover preview';
+        els.coverPreview.replaceChildren(img);
+      }
+
+      function showSavedCover() {
+        if (removeCoverOnSave) showCoverPreview(null, 'Removed on save');
+        else showCoverPreview(hasSavedCover() ? coverUrl(coverBook) : null);
+      }
+
+      function syncCoverRemoveButton() {
+        const file = els.coverInput.files[0];
+        els.coverRemove.hidden = !file && (!hasSavedCover() || removeCoverOnSave);
+        els.coverName.textContent = file
+          ? file.name
+          : removeCoverOnSave ? 'Cover will be removed' : hasSavedCover() ? 'Keeping the current cover' : 'No file chosen';
+      }
+
+      function clearCoverError() {
+        const field = els.coverInput.closest('.field');
+        field.classList.remove('invalid');
+        field.querySelector('.field-error').textContent = '';
+      }
+
+      function resetCover() {
+        removeCoverOnSave = false;
+        els.coverForm.reset();
+        clearCoverError();
+        showSavedCover();
+        syncCoverRemoveButton();
+      }
+
+      function coverProblem(file) {
+        if (!COVER_TYPES.includes(file.type)) return 'Only JPEG, PNG, GIF or WEBP images are allowed';
+        if (file.size > MAX_COVER_BYTES) return 'Image must be 5 MB or smaller';
+        return null;
+      }
+
+      els.coverInput.addEventListener('change', () => {
+        clearCoverError();
+        syncCoverRemoveButton();
+        const file = els.coverInput.files[0];
+        if (!file) {
+          showSavedCover();
+          return;
+        }
+        const problem = coverProblem(file);
+        if (problem) {
+          setFieldError(els.card, 'file', problem);
+          return;
+        }
+        const url = URL.createObjectURL(file);
+        showCoverPreview(url);
+        previewUrl = url;
+      });
+
+      // Clears a picked file and, when editing, marks the saved cover for deletion.
+      els.coverRemove.addEventListener('click', () => {
+        els.coverForm.reset();
+        clearCoverError();
+        if (hasSavedCover()) removeCoverOnSave = true;
+        showSavedCover();
+        syncCoverRemoveButton();
+        els.coverInput.focus();
+      });
+
+      els.coverForm.addEventListener('submit', (e) => e.preventDefault());
+
+      // Sends the cover form as multipart/form-data; the browser sets the boundary header itself.
+      async function uploadCover(bookId) {
+        const res = await fetch(`${API}/${encodeURIComponent(bookId)}/cover`, {
+          method: 'POST',
+          body: new FormData(els.coverForm),
+        });
+        if (!res.ok) throw new Error(serverMessage(await readBody(res)) || `server responded with ${res.status}`);
+      }
+
+      async function deleteCover(bookId) {
+        const { res, body } = await send('DELETE', `${API}/${encodeURIComponent(bookId)}/cover`);
+        if (!res.ok) throw new Error(serverMessage(body) || `server responded with ${res.status}`);
+      }
+
+      // ===== Edit mode =====
+
+      function submitLabel() {
+        return editingId != null ? 'Save changes' : 'Add to collection';
+      }
+
+      function markEditingCard() {
+        els.grid.querySelectorAll('.book').forEach((card) => {
+          card.classList.toggle('editing', editingId != null && card.dataset.bookId === String(editingId));
+        });
+      }
+
+      function fillForm(book) {
+        const set = (name, value) => { els.form.elements[name].value = value == null ? '' : value; };
+        set('title', book.title);
+        set('author', book.author);
+        set('description', book.description);
+        set('language', book.language);
+        set('shelfLocation', book.shelfLocation);
+        set('isbn', book.isbn);
+        set('categoryId', book.categoryId);
+        set('copiesAvailable', book.copiesAvailable);
+        set('replacementCost', book.replacementCost);
+      }
+
+      async function startEdit(book, button) {
+        let fresh = book;
+        if (button) button.disabled = true;
+        try {
+          const res = await fetch(`${API}/${encodeURIComponent(book.id)}`, { headers: { Accept: 'application/json' } });
+          if (res.status === 404) {
+            toast('That title no longer exists.', true);
+            await refreshCatalog();
+            return;
+          }
+          if (res.ok) fresh = normalizeBook(await res.json());
+        } catch {
+          // Fall back to the catalog copy if the single-book endpoint is unreachable.
+        } finally {
+          if (button) button.disabled = false;
+        }
+
+        clearErrors(els.card, els.formError);
+        editingId = fresh.id;
+        editingCategoryId = fresh.categoryId;
+        coverBook = fresh;
+        syncNoCategoryOption();
+        fillForm(fresh);
+        resetCover();
+        els.card.classList.add('editing');
+        els.formHeading.textContent = 'Edit record';
+        els.formSub.textContent = `“${fresh.title}” · record #${fresh.id}`;
+        els.submitBtn.textContent = submitLabel();
+        els.cancelEditBtn.hidden = false;
+        markEditingCard();
+        els.card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        els.form.elements.title.focus({ preventScroll: true });
+      }
+
+      function stopEdit() {
+        editingId = null;
+        editingCategoryId = null;
+        coverBook = null;
+        els.form.reset();
+        resetCover();
+        clearErrors(els.card, els.formError);
+        syncNoCategoryOption();
+        els.card.classList.remove('editing');
+        els.formHeading.textContent = 'Add to collection';
+        els.formSub.textContent = 'Create a catalog record for a new title.';
+        els.submitBtn.textContent = submitLabel();
+        els.cancelEditBtn.hidden = true;
+        markEditingCard();
+      }
+
+      els.cancelEditBtn.addEventListener('click', stopEdit);
+
+      els.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearErrors(els.card, els.formError);
+
+        const { book, categoryId } = readForm();
+        const isEdit = editingId != null;
+        const base = isEdit ? `${API}/${encodeURIComponent(editingId)}` : API;
+        const url = categoryId ? `${base}?categoryId=${encodeURIComponent(categoryId)}` : base;
+
+        const coverFile = els.coverInput.files[0] || null;
+        const badCover = coverFile && coverProblem(coverFile);
+        if (badCover) {
+          setFieldError(els.card, 'file', badCover);
+          els.coverInput.focus();
+          return;
+        }
+
+        els.submitBtn.disabled = true;
+        els.submitBtn.textContent = 'Saving…';
+        try {
+          const { res, body } = await send(isEdit ? 'PUT' : 'POST', url, book);
+
+          if (res.ok) {
+            const title = (body && body.title) || book.title;
+            const savedId = (body && body.id) != null ? body.id : editingId;
+
+            // The record is saved first because the cover endpoints need its id.
+            let coverError = null;
+            const removeCover = isEdit && removeCoverOnSave;
+            if (savedId != null && (coverFile || removeCover)) {
+              els.submitBtn.textContent = coverFile ? 'Uploading cover…' : 'Removing cover…';
+              try {
+                if (coverFile) await uploadCover(savedId);
+                else await deleteCover(savedId);
+              } catch (err) {
+                coverError = err.message;
+              }
+            }
+
+            if (isEdit) {
+              stopEdit();
+            } else {
+              els.form.reset();
+              resetCover();
+            }
+            if (coverError) toast(`Saved “${title}”, but the cover could not be updated: ${coverError}`, true);
+            else toast(isEdit ? `Saved changes to “${title}”.` : `Added “${title}” to the collection.`);
+            await refreshCatalog();
+            return;
+          }
+
+          if (isEdit && res.status === 404 && /book not found/i.test(serverMessage(body))) {
+            stopEdit();
+            toast('That title was removed by someone else.', true);
+            await refreshCatalog();
+            return;
+          }
+          if (res.status === 400 && applyFieldErrors(els.card, els.formError, body, BOOK_FIELDS)) return;
+
+          const message = serverMessage(body) || `Request failed with status ${res.status}.`;
+          showError(els.formError, message);
+          if (/category not found/i.test(message)) loadCategories();
+        } catch (err) {
+          showError(els.formError, 'Network error: ' + err.message);
+        } finally {
+          els.submitBtn.disabled = false;
+          els.submitBtn.textContent = submitLabel();
+        }
+      });
+
+      // ===== Lend dialog =====
+
+      let lendingBook = null;
+
+      function updateDuePreview() {
+        const due = today();
+        due.setDate(due.getDate() + Number(els.lendDays.value));
+        els.duePreview.textContent = `Due back on ${due.toLocaleDateString(DATE_LOCALE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
+      }
+
+      function openLend(book) {
+        lendingBook = book;
+        els.lendForm.reset();
+        clearErrors(els.lendForm, els.lendError);
+
+        const info = el('div');
+        info.appendChild(el('div', 'lend-book-title', book.title));
+        info.appendChild(el('div', 'lend-book-sub', [book.author, book.shelfLocation].filter(Boolean).join(' · ')));
+        info.appendChild(availabilityElement(book));
+        els.lendBook.replaceChildren(coverElement(book), info);
+
+        updateDuePreview();
+        els.lendDialog.showModal();
+        els.lendForm.elements.borrowerName.focus();
+      }
+
+      function closeLend() {
+        els.lendDialog.close();
+      }
+
+      els.lendDays.addEventListener('change', updateDuePreview);
+      els.lendCancel.addEventListener('click', closeLend);
+      els.lendClose.addEventListener('click', closeLend);
+      els.lendDialog.addEventListener('close', () => { lendingBook = null; });
+
+      els.lendForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!lendingBook) return;
+        clearErrors(els.lendForm, els.lendError);
+
+        const data = new FormData(els.lendForm);
+        const payload = {
+          bookId: lendingBook.id,
+          borrowerName: (data.get('borrowerName') || '').toString().trim(),
+          borrowerEmail: (data.get('borrowerEmail') || '').toString().trim(),
+          days: Number(data.get('days')),
+        };
+
+        els.lendSubmit.disabled = true;
+        els.lendSubmit.textContent = 'Saving…';
+        try {
+          const { res, body } = await send('POST', LOANS_API, payload);
+          if (res.ok) {
+            closeLend();
+            toast(`Lent “${body.bookTitle}” to ${body.borrowerName}. Due back ${formatDate(body.dueDate)}.`);
+            loadBooks();
+            loadSummary();
+            return;
+          }
+          if (res.status === 400 && applyFieldErrors(els.lendForm, els.lendError, body)) return;
+          showError(els.lendError, serverMessage(body) || `Request failed with status ${res.status}.`);
+          // Availability may have changed since the catalog was loaded.
+          if (res.status === 409 || res.status === 404) loadBooks();
+        } catch (err) {
+          showError(els.lendError, 'Network error: ' + err.message);
+        } finally {
+          els.lendSubmit.disabled = false;
+          els.lendSubmit.textContent = 'Confirm loan';
+        }
+      });
+
+      // ===== Loans view =====
+
+      function loansUrl() {
+        const params = new URLSearchParams({ page: loanQuery.page, size: loanQuery.size, sort: loanQuery.sort });
+        params.append('sort', 'id,desc');
+        if (loanQuery.status !== 'ALL') params.set('status', loanQuery.status);
+        const keyword = els.loanSearch.value.trim();
+        if (keyword) params.set('keyword', keyword);
+        return `${LOANS_API}?${params}`;
+      }
+
+      function renderLoansState(title, detail) {
+        const td = el('td', 'empty');
+        td.colSpan = 6;
+        td.appendChild(el('strong', null, title));
+        if (detail) td.appendChild(el('span', null, detail));
+        const tr = el('tr');
+        tr.appendChild(td);
+        els.loansBody.replaceChildren(tr);
+      }
+
+      async function loadLoans() {
+        const seq = ++loanSeq;
+        if (!els.loansBody.children.length) renderLoansState('Loading loans…');
+        try {
+          const result = await fetchJson(loansUrl());
+          if (seq !== loanSeq) return;
+          const info = result.page;
+          if (info && info.totalPages > 0 && loanQuery.page >= info.totalPages) {
+            loanQuery.page = info.totalPages - 1;
+            await loadLoans();
+            return;
+          }
+          renderLoans(result);
+        } catch (err) {
+          if (seq !== loanSeq) return;
+          els.loansPager.hidden = true;
+          renderLoansState('Could not load loans', err.message + '.');
+        }
+      }
+
+      function renderLoans(result) {
+        const loans = result.content || [];
+        renderPager(els.loansPager, result.page || { number: 0, size: loans.length, totalElements: loans.length, totalPages: 1 }, 'loan', (page) => {
+          loanQuery.page = page;
+          loadLoans();
+          scrollToTop(els.loansBody);
+        });
+        if (!loans.length) {
+          const keyword = els.loanSearch.value.trim();
+          const empty = {
+            ACTIVE: ['No copies on loan', 'Lend a copy from the Catalog to start a loan record.'],
+            OVERDUE: ['Nothing overdue', 'Every borrowed copy is within its loan period.'],
+            RETURNED: ['No returns yet', 'Returned loans are kept here as a record.'],
+            ALL: ['No loan records yet', 'Lend a copy from the Catalog to create one.'],
+          }[loanQuery.status];
+          renderLoansState(keyword ? 'No matching loans' : empty[0], keyword ? `Nothing matches “${keyword}”.` : empty[1]);
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        loans.forEach((loan) => frag.appendChild(loanRow(loan)));
+        els.loansBody.replaceChildren(frag);
+      }
+
+      function dueNote(loan) {
+        if (loan.status === 'RETURNED') return null;
+        if (loan.status === 'OVERDUE') return el('div', 'cell-sub bad', `${plural(loan.daysOverdue, 'day')} late`);
+        const days = daysFromToday(parseDate(loan.dueDate));
+        return el('div', 'cell-sub', days === 0 ? 'Due today' : days === 1 ? 'Due tomorrow' : `In ${days} days`);
+      }
+
+      function loanRow(loan) {
+        const tr = el('tr');
+
+        const book = el('td');
+        book.appendChild(el('div', 'cell-main', loan.bookTitle));
+        book.appendChild(el('div', 'cell-sub', [loan.bookAuthor, loan.shelfLocation].filter(Boolean).join(' · ')));
+
+        const borrower = el('td');
+        borrower.appendChild(el('div', 'cell-main', loan.borrowerName));
+        borrower.appendChild(el('div', 'cell-sub', loan.borrowerEmail));
+
+        const loaned = el('td', 'nowrap', formatDate(loan.loanDate));
+
+        const due = el('td', 'nowrap');
+        due.appendChild(el('div', null, formatDate(loan.dueDate)));
+        const note = dueNote(loan);
+        if (note) due.appendChild(note);
+
+        const status = el('td');
+        const label = { ACTIVE: 'On loan', OVERDUE: 'Overdue', RETURNED: 'Returned' }[loan.status] || loan.status;
+        status.appendChild(el('span', 'status ' + String(loan.status).toLowerCase(), label));
+        if (loan.status === 'RETURNED') status.appendChild(el('div', 'cell-sub', formatDate(loan.returnedAt)));
+
+        const action = el('td', 'nowrap');
+        if (loan.status !== 'RETURNED') {
+          const btn = el('button', 'btn btn-secondary btn-sm', 'Mark returned');
+          btn.type = 'button';
+          btn.setAttribute('aria-label', `Mark “${loan.bookTitle}” returned by ${loan.borrowerName}`);
+          btn.addEventListener('click', () => returnLoan(loan, btn));
+          action.appendChild(btn);
+        }
+
+        tr.append(book, borrower, loaned, due, status, action);
+        return tr;
+      }
+
+      async function returnLoan(loan, button) {
+        button.disabled = true;
+        button.textContent = 'Saving…';
+        try {
+          const { res, body } = await send('PUT', `${LOANS_API}/${encodeURIComponent(loan.id)}/return`);
+          if (!res.ok) throw new Error(serverMessage(body) || `server responded with ${res.status}`);
+          toast(`“${loan.bookTitle}” is back on the shelf.`);
+        } catch (err) {
+          toast('Could not record the return: ' + err.message, true);
+        }
+        await Promise.all([loadLoans(), loadSummary(), loadBooks()]);
+      }
+
+      function selectLoanTab(status, load = true) {
+        loanQuery.status = status;
+        loanQuery.page = 0;
+        loanQuery.sort = LOAN_SORT[status];
+        els.loanSort.value = loanQuery.sort;
+        els.loanTabs.querySelectorAll('[data-status]').forEach((t) => {
+          t.setAttribute('aria-selected', String(t.dataset.status === status));
+        });
+        if (load) loadLoans();
+      }
+
+      els.loanTabs.querySelectorAll('[data-status]').forEach((t) => {
+        t.addEventListener('click', () => selectLoanTab(t.dataset.status));
+      });
+
+      els.loanSearch.addEventListener('input', () => {
+        clearTimeout(loanSearchTimer);
+        loanSearchTimer = setTimeout(() => {
+          loanQuery.page = 0;
+          loadLoans();
+        }, 250);
+      });
+
+      els.loanSort.addEventListener('change', () => {
+        loanQuery.sort = els.loanSort.value;
+        loanQuery.page = 0;
+        loadLoans();
+      });
+
+      // ===== Categories drawer =====
+
+      let lastFocus = null;
+      let editingCategory = null;
+
+      function isDrawerOpen() {
+        return els.drawer.classList.contains('open');
+      }
+
+      function openDrawer() {
+        if (!isDrawerOpen()) lastFocus = document.activeElement;
+        loadCategories();
+        els.drawer.classList.add('open');
+        els.backdrop.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        els.drawerClose.focus();
+      }
+
+      function closeDrawer() {
+        if (!isDrawerOpen()) return;
+        els.drawer.classList.remove('open');
+        els.backdrop.classList.remove('open');
+        document.body.style.overflow = '';
+        if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+      }
+
+      els.categoriesBtn.addEventListener('click', openDrawer);
+      els.drawerClose.addEventListener('click', closeDrawer);
+      els.backdrop.addEventListener('click', closeDrawer);
+
+      document.addEventListener('keydown', (e) => {
+        if (!isDrawerOpen()) return;
+        if (e.key === 'Escape') {
+          closeDrawer();
+          return;
+        }
+        if (e.key !== 'Tab') return;
+        const focusable = [...els.drawer.querySelectorAll('button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])')]
+          .filter((n) => !n.disabled && n.offsetParent !== null);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      });
+
+      function categoryFormLabel() {
+        return editingCategory ? 'Save category' : 'Add category';
+      }
+
+      function setCategoryFieldError(name, message) {
+        setFieldError(els.categoryForm, name, message);
+        els.categoryForm.querySelector(`.field[data-field="${name}"] input`).focus();
+      }
+
+      function renderCategoryList() {
+        if (!categories.length) {
+          const box = el('div', 'state');
+          box.appendChild(el('strong', null, 'No categories yet'));
+          box.appendChild(el('span', null, 'Create one above to organize the collection.'));
+          els.categoriesList.replaceChildren(box);
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        categories.forEach((c) => frag.appendChild(categoryItem(c)));
+        els.categoriesList.replaceChildren(frag);
+      }
+
+      function categoryItem(cat) {
+        const count = cat.bookCount;
+        const item = el('article', 'panel cat-item' + (editingCategory && editingCategory.id === cat.id ? ' editing' : ''));
+
+        const head = el('div', 'cat-item-head');
+        head.appendChild(el('span', 'cat-item-name', cat.name));
+        head.appendChild(el('span', 'cat-item-count', `${plural(count, 'title')} · #${cat.id}`));
+        item.appendChild(head);
+        item.appendChild(el('p', 'cat-item-desc' + (cat.description ? '' : ' empty'), cat.description || 'No description.'));
+
+        const action = (text, cls, label, onClick) => {
+          const b = el('button', 'link-btn' + (cls ? ' ' + cls : ''), text);
+          b.type = 'button';
+          b.setAttribute('aria-label', label);
+          b.addEventListener('click', onClick);
+          return b;
+        };
+        const actions = el('div', 'cat-item-actions');
+        actions.append(
+          action('View titles', '', `View titles in ${cat.name}`, () => {
+            closeDrawer();
+            location.hash = '#catalog';
+            setCategoryFilter(cat.id);
+          }),
+          action('Edit', 'muted', `Edit ${cat.name}`, () => startCategoryEdit(cat)),
+          action('Delete', 'danger', `Delete ${cat.name}`, (e) => deleteCategory(cat, e.currentTarget))
+        );
+        item.appendChild(actions);
+        return item;
+      }
+
+      function startCategoryEdit(cat) {
+        clearErrors(els.categoryForm, els.categoryError);
+        editingCategory = cat;
+        els.categoryForm.elements.name.value = cat.name || '';
+        els.categoryForm.elements.description.value = cat.description || '';
+        els.categoryForm.classList.add('editing');
+        els.categoryFormHeading.textContent = `Edit “${cat.name}”`;
+        els.categorySubmit.textContent = categoryFormLabel();
+        els.categoryCancel.hidden = false;
+        renderCategoryList();
+        els.categoryForm.elements.name.focus();
+      }
+
+      function stopCategoryEdit() {
+        editingCategory = null;
+        els.categoryForm.reset();
+        clearErrors(els.categoryForm, els.categoryError);
+        els.categoryForm.classList.remove('editing');
+        els.categoryFormHeading.textContent = 'New category';
+        els.categorySubmit.textContent = categoryFormLabel();
+        els.categoryCancel.hidden = true;
+        renderCategoryList();
+      }
+
+      els.categoryCancel.addEventListener('click', stopCategoryEdit);
+
+      async function refreshAfterCategoryChange() {
+        await loadCategories();
+        await loadBooks();
+      }
+
+      els.categoryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearErrors(els.categoryForm, els.categoryError);
+
+        const name = els.categoryForm.elements.name.value.trim();
+        const description = els.categoryForm.elements.description.value.trim();
+        const editing = editingCategory;
+        if (!name) {
+          setCategoryFieldError('name', 'Name is required');
+          return;
+        }
+        const duplicate = categories.find((c) =>
+          (c.name || '').toLowerCase() === name.toLowerCase() && (!editing || c.id !== editing.id));
+        if (duplicate) {
+          setCategoryFieldError('name', `A category named “${duplicate.name}” already exists`);
+          return;
+        }
+
+        els.categorySubmit.disabled = true;
+        els.categorySubmit.textContent = 'Saving…';
+        try {
+          const { res, body } = await send(
+            editing ? 'PUT' : 'POST',
+            editing ? `${CATEGORIES_API}/${encodeURIComponent(editing.id)}` : CATEGORIES_API,
+            { name, description: description || null }
+          );
+          if (res.ok) {
+            stopCategoryEdit();
+            toast(editing ? `Saved category “${name}”.` : `Added category “${name}”.`);
+            await refreshAfterCategoryChange();
+            return;
+          }
+          if (res.status === 400 && applyFieldErrors(els.categoryForm, els.categoryError, body, ['name', 'description'])) return;
+          if (res.status === 409) {
+            setCategoryFieldError('name', serverMessage(body) || 'A category with this name already exists');
+            return;
+          }
+          showError(els.categoryError, serverMessage(body) || `Request failed with status ${res.status}.`);
+          if (res.status === 404) loadCategories();
+        } catch (err) {
+          showError(els.categoryError, 'Network error: ' + err.message);
+        } finally {
+          els.categorySubmit.disabled = false;
+          els.categorySubmit.textContent = categoryFormLabel();
+        }
+      });
+
+      async function deleteCategory(cat, button) {
+        if (cat.bookCount) {
+          toast(`“${cat.name}” still has ${plural(cat.bookCount, 'title')}. Move or remove them first.`, true);
+          return;
+        }
+        if (!confirm(`Delete category “${cat.name}”?`)) return;
+
+        button.disabled = true;
+        try {
+          const { res, body } = await send('DELETE', `${CATEGORIES_API}/${encodeURIComponent(cat.id)}`);
+          if (res.ok) {
+            if (editingCategory && editingCategory.id === cat.id) stopCategoryEdit();
+            toast(`Deleted category “${cat.name}”.`);
+          } else {
+            toast(serverMessage(body) || `Could not delete “${cat.name}”.`, true);
+          }
+          await refreshAfterCategoryChange();
+        } catch (err) {
+          button.disabled = false;
+          toast('Delete failed: ' + err.message, true);
+        }
+      }
+
+      // ===== Start =====
+
+      route();
+      loadCategories();
+      loadLanguages();
+      loadBooks();
+      loadSummary();
+    })();
+  </script>
+</body>
+</html>
